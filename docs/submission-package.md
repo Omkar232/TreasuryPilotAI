@@ -47,6 +47,13 @@ The official organizer page asks for a working demo, a video walkthrough under f
 - [x] Entrant reports that Omkar Mali is registered as a solo participant.
 - [x] Entrant reports organizer confirmation that pre-build-phase work is eligible. The current listing says the build phase starts October 27, 2026, while the user-provided specification says October 25; retain the organizer confirmation for the submission in case the form asks.
 - [ ] Create a public repository and add its URL to this document and the README.
+
+After GitHub CLI authorization (`gh auth login`), publish the committed `main` branch with:
+
+```sh
+gh repo create Omkar232/TreasuryPilotAI --public --source . --remote origin --push
+```
+
 - [x] Record a walkthrough under five minutes. [ ] Publish it and include its URL in this document and the README.
 - [ ] Decide whether to provision a hosted demo; if so, deploy only after reviewing the Render plans, production secrets, and access controls, then verify its public health check.
 - [ ] Recheck the official submission form and deadline, then submit through HackerEarth.
