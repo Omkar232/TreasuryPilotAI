@@ -23,7 +23,7 @@ Its deterministic treasury planner uses decimal arithmetic, keeps currencies sep
 
 The local walkthrough demonstrates an unresolved transfer being blocked and provides a separate synthetic recovery scenario for the reserve, duplicate, approval-binding, and verification concepts. Synthetic states and amounts are labeled and never presented as bank data.
 
-**Current limitation:** A fresh Airwallex sandbox login check on October 25 returned HTTP 403 (`unauthorized`), so the balance request was not attempted and no live read or write has been verified. Transfer creation and user-facing approvals are not exposed. Live plans hold actions while fee impact is unknown. The demo therefore shows the safe blocked workflow and a clearly labeled simulation, not a completed Airwallex payment.
+**Current limitation:** A fresh Airwallex sandbox login check on October 25 returned HTTP 403 (`unauthorized`), so the balance request was not attempted and no live read or write has been verified. The approval center reviews persisted records but cannot create or approve requests; transfer creation is not exposed. Live plans hold actions while fee impact is unknown. The demo therefore shows the safe blocked workflow and a clearly labeled simulation, not a completed Airwallex payment.
 
 ## Setup and demo
 

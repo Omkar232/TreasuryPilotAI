@@ -1,4 +1,6 @@
 import asyncio
+from datetime import datetime, timedelta, timezone
+from decimal import Decimal
 from hashlib import sha256
 import httpx
 import json
@@ -7,6 +9,8 @@ settings.app_api_token = "test-secret"
 settings.app_admin_token = "test-admin-secret"
 from app.main import app
 from app.api import routes
+from app.db.database import SessionLocal
+from app.models import Approval, PaymentIncident
 
 async def api_scenario(callback):
     async with app.router.lifespan_context(app):
@@ -21,6 +25,37 @@ def test_health_public_and_financial_routes_protected():
         assert readiness.headers["X-Request-ID"] == "test.trace-1"
         assert (await client.get("/api/incidents")).status_code == 401
         assert (await client.get("/api/incidents", headers={"Authorization":"Bearer test-secret"})).status_code == 200
+    asyncio.run(api_scenario(scenario))
+
+def test_approval_center_lists_only_persisted_action_binding_without_secrets():
+    async def scenario(client):
+        assert (await client.get("/api/approvals")).status_code == 401
+        headers = {"Authorization":"Bearer test-secret"}
+        created = await client.post("/api/incidents", headers=headers, json={
+            "supplier":"Approval Supplier", "original_transfer_id":"tr_approval_view",
+            "amount":"125.50", "currency":"USD", "supplier_claim":"Payment is late"})
+        assert created.status_code == 201
+        incident_id = created.json()["id"]
+        with SessionLocal() as db:
+            db.add(Approval(id="approval-view-test", incident_id=incident_id,
+                operation_id=None, action_hash="a" * 64, counterparty="Approval Supplier",
+                amount=Decimal("125.50"), currency="USD", evidence_version="b" * 64,
+                status="PENDING", expires_at=datetime.now(timezone.utc) + timedelta(minutes=5),
+                requested_by="operator", policy_version=3))
+            db.commit()
+        response = await client.get("/api/approvals", headers=headers)
+        assert response.status_code == 200, response.text
+        item = next(row for row in response.json() if row["id"] == "approval-view-test")
+        assert item["action"] == "REPLACE_TRANSFER"
+        assert item["incident_id"] == incident_id
+        assert item["original_transfer_id"] == "tr_approval_view"
+        assert item["amount"] == "125.5000"
+        assert item["currency"] == "USD"
+        assert item["status"] == "PENDING"
+        assert item["requested_by"] == "operator"
+        assert item["policy_version"] == 3
+        assert "action_hash" not in item and "evidence_version" not in item
+        assert (await client.get("/api/approvals?limit=0", headers=headers)).status_code == 422
     asyncio.run(api_scenario(scenario))
 
 def test_request_body_over_one_megabyte_is_rejected_before_route_handling():

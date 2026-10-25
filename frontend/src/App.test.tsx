@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { BrowserRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import App from './App'
@@ -33,6 +33,7 @@ describe('TreasuryPilot shell', () => {
       ],
       '/api/treasury/policies': [],
       '/api/audit?limit=20': [{ actor:'operator',timestamp:new Date().toISOString(),event_type:'INCIDENT_CREATED',incident_id:'incident-1',external_transfer_id:'tr-1',new_state:'NEW',policy_version:null,approval_reference:null }],
+      '/api/approvals': [],
     }
     vi.stubGlobal('fetch', vi.fn(async (input:RequestInfo | URL) => {
       const url = String(input)
@@ -46,13 +47,46 @@ describe('TreasuryPilot shell', () => {
     expect(await screen.findByText(/EUR 400.*USD 9,007,199,254,742,193\.4234/)).toBeInTheDocument()
     expect(await screen.findByText('USD 9,007,199,254,740,993.1234')).toBeInTheDocument()
     expect(screen.getByText('1 obligation')).toBeInTheDocument()
-    expect(screen.getByText('Not enabled')).toBeInTheDocument()
+    expect(await screen.findByText('No persisted approval requests')).toBeInTheDocument()
     expect(await screen.findByText(/Airwallex balance read failed/)).toBeInTheDocument()
     expect(await screen.findByText('Airwallex permission: forbidden')).toBeInTheDocument()
     expect(screen.getByText(/No USD reserve policy/)).toBeInTheDocument()
     expect(screen.getByText(/No EUR reserve policy/)).toBeInTheDocument()
     expect(screen.getByText('incident created')).toBeInTheDocument()
     expect(screen.queryByText(/USD 1,200 available/)).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('link', {name:'Approval center'}))
+    expect(await screen.findByText('Read-only approval history')).toBeInTheDocument()
+    expect(screen.getByText('No persisted approval records')).toBeInTheDocument()
+    expect(screen.queryByRole('button', {name:/approve/i})).not.toBeInTheDocument()
+  })
+
+  it('shows persisted approval details without exposing action controls', async () => {
+    sessionStorage.setItem('tp-token', 'operator-test-token')
+    const approval = { id:'approval-12345678', action:'REPLACE_TRANSFER', incident_id:'incident-12345678',
+      original_transfer_id:'tr-original-123', operation_id:'operation-1', operation_status:'PREPARED',
+      counterparty:'Northwind Parts', amount:'1250.50', currency:'USD', status:'PENDING',
+      expires_at:new Date(Date.now()+60_000).toISOString(), requested_by:'operator', approved_by:null,
+      approved_at:null, policy_version:4 }
+    const fixtures:Record<string, unknown> = {
+      '/api/integrations/airwallex/status': { configured:false, status:'disconnected', note:'Airwallex is disconnected.' },
+      '/api/incidents':[], '/api/treasury/obligations':[], '/api/treasury/policies':[],
+      '/api/audit?limit=20':[], '/api/approvals':[approval],
+    }
+    vi.stubGlobal('fetch', vi.fn(async (input:RequestInfo | URL) => {
+      const url=String(input)
+      const key=Object.keys(fixtures).find(path=>url.endsWith(path))
+      return new Response(JSON.stringify(key?fixtures[key]:{detail:'Not found'}),
+        {status:key?200:404,headers:{'Content-Type':'application/json'}})
+    }))
+    renderApp()
+    fireEvent.click(await screen.findByRole('link',{name:'Approval center'}))
+    expect(await screen.findByText('REPLACE TRANSFER')).toBeInTheDocument()
+    expect(screen.getByText(/Northwind Parts/)).toBeInTheDocument()
+    expect(screen.getByText(/USD 1,250\.5/)).toBeInTheDocument()
+    expect(screen.getByText('PENDING')).toBeInTheDocument()
+    expect(screen.getByText(/Original tr-original-123/)).toBeInTheDocument()
+    expect(screen.getByText('v4')).toBeInTheDocument()
+    expect(screen.queryByRole('button',{name:/approve/i})).not.toBeInTheDocument()
   })
 })
 

@@ -8,7 +8,8 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.core.security import require_operator, require_policy_admin
 from app.db.database import get_db
-from app.models import AuditEvent, IncidentEvidence, Obligation, PaymentIncident, TreasuryPlan, TreasuryPolicy
+from app.models import (Approval, AgentExecution, AuditEvent, IncidentEvidence, Obligation,
+    PaymentIncident, TreasuryPlan, TreasuryPolicy)
 from app.schemas import (EvaluationView, IncidentCreate, IncidentDetailView, IncidentView,
     ObligationCreate, ObligationView, TreasuryPlanView, TreasuryPolicyUpdate, TreasuryPolicyView)
 from app.services.airwallex import AirwallexClient, AirwallexError
@@ -412,3 +413,35 @@ def audit(limit: int = 100, db: Session = Depends(get_db)):
         "incident_id": e.incident_id, "external_transfer_id": e.external_transfer_id,
         "previous_state": e.previous_state, "new_state": e.new_state,
         "policy_version": e.policy_version, "approval_reference": e.approval_id, "details": e.details} for e in events]
+
+@router.get("/approvals")
+def list_approvals(limit: int = 100, offset: int = 0, db: Session = Depends(get_db)):
+    """List persisted approval decisions without authorizing or executing actions."""
+    if not 1 <= limit <= 200 or offset < 0:
+        raise HTTPException(422, "limit must be 1–200 and offset must be nonnegative")
+    rows = db.execute(select(Approval, PaymentIncident, AgentExecution)
+        .join(PaymentIncident, PaymentIncident.id == Approval.incident_id)
+        .outerjoin(AgentExecution, AgentExecution.id == Approval.operation_id)
+        .order_by(Approval.expires_at.desc(), Approval.id)
+        .limit(limit).offset(offset)).all()
+    def as_utc(value: datetime | None) -> datetime | None:
+        if value is None:
+            return None
+        return value.replace(tzinfo=timezone.utc) if value.tzinfo is None else value.astimezone(timezone.utc)
+    return [{
+        "id": approval.id,
+        "action": "REPLACE_TRANSFER",
+        "incident_id": incident.id,
+        "original_transfer_id": incident.original_transfer_id,
+        "operation_id": approval.operation_id,
+        "operation_status": execution.status if execution is not None else None,
+        "counterparty": approval.counterparty,
+        "amount": format(approval.amount, "f"),
+        "currency": approval.currency,
+        "status": approval.status,
+        "expires_at": as_utc(approval.expires_at),
+        "requested_by": approval.requested_by,
+        "approved_by": approval.approved_by,
+        "approved_at": as_utc(approval.approved_at),
+        "policy_version": approval.policy_version,
+    } for approval, incident, execution in rows]

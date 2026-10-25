@@ -105,9 +105,11 @@ test('record a captioned submission walkthrough without external API calls', asy
 
   await page.getByRole('link', { name: 'Approval center' }).click()
   await expect(page.getByRole('heading', { name: 'Approval center' })).toBeVisible()
-  await expect(page.getByText('Approval workflow not enabled')).toBeVisible()
-  await expect(page.getByText(/No transfer can be approved or executed from this page/).first()).toBeVisible()
-  await caption(page, 'The approval center is explicitly unavailable, and the app exposes no transfer execution workflow. The internal approval service is not a user-facing authorization path.')
+  await expect(page.getByText('Read-only approval history')).toBeVisible()
+  await expect(page.getByText('No persisted approval records')).toBeVisible()
+  await expect(page.getByText(/does not create approval requests, approve actions, or execute transfers/)).toBeVisible()
+  await expect(page.getByRole('button', { name: /approve/i })).toHaveCount(0)
+  await caption(page, 'The approval center is read-only. It shows saved action-bound records but has no request, approval, or transfer execution controls.')
 
   await caption(page, 'Demo summary: verified evidence and deterministic policy checks keep uncertainty from triggering a replacement. Synthetic stages are labeled. Live Airwallex recovery and post-write verification remain blocked and unimplemented.')
 })
