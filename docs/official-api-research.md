@@ -1,6 +1,6 @@
 # Official Airwallex API research
 
-API research and a credential-only sandbox login check were repeated on **2026-10-25** against the linked official references. API behavior and hackathon rules can change; re-check before final submission. Backend-only sandbox credentials are present in the ignored local `.env` and Compose backend, but login again returned HTTP 403 (provider code `unauthorized`). The balance request was not attempted because authentication failed. No successful read or write was verified. Playwright explicitly clears Airwallex variables to prevent external calls.
+API research and a credential-only sandbox login check were repeated on **2026-10-26** against the linked official references. API behavior and hackathon rules can change; re-check before final submission. Backend-only sandbox credentials are present in the ignored local `.env` and Compose backend, but login again returned HTTP 403 (provider code `unauthorized`). The balance request was not attempted because authentication failed. No successful read or write was verified. Playwright explicitly clears Airwallex variables to prevent external calls.
 
 ## Hackathon
 
@@ -106,4 +106,4 @@ API research and a credential-only sandbox login check were repeated on **2026-1
 
 ## Tested against actual account
 
-**None.** Backend-only sandbox credentials are configured in the local Compose backend, but the October 25 login attempt returned HTTP 403 (`unauthorized`), so no authenticated API operation succeeded. PostgreSQL 16 is running locally and has been verified through the readiness endpoint. The app can run with explicitly synthetic demo fixtures; demo values are not Airwallex data and cannot validate API behavior.
+**None.** Backend-only sandbox credentials are configured in the local Compose backend, but the October 26 login attempt returned HTTP 403 (`permission`), so no authenticated API operation succeeded. PostgreSQL 16 is running locally and has been verified through the readiness endpoint. The app can run with explicitly synthetic demo fixtures; demo values are not Airwallex data and cannot validate API behavior.

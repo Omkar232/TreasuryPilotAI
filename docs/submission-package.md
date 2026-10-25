@@ -23,7 +23,7 @@ Its deterministic treasury planner uses decimal arithmetic, keeps currencies sep
 
 The local walkthrough demonstrates an unresolved transfer being blocked and provides a separate synthetic recovery scenario for the reserve, duplicate, approval-binding, and verification concepts. Synthetic states and amounts are labeled and never presented as bank data.
 
-**Current limitation:** A fresh Airwallex sandbox login check on October 25 returned HTTP 403 (`unauthorized`), so the balance request was not attempted and no live read or write has been verified. The approval center reviews persisted records but cannot create or approve requests; transfer creation is not exposed. Live plans hold actions while fee impact is unknown. The demo therefore shows the safe blocked workflow and a clearly labeled simulation, not a completed Airwallex payment.
+**Current limitation:** A fresh Airwallex sandbox login check on October 26 returned HTTP 403 (`permission`), so the balance request was not attempted and no live read or write has been verified. The approval center reviews persisted records but cannot create or approve requests; transfer creation is not exposed. Live plans hold actions while fee impact is unknown. The demo therefore shows the safe blocked workflow and a clearly labeled simulation, not a completed Airwallex payment.
 
 ## Setup and demo
 
@@ -64,4 +64,4 @@ gh repo create Omkar232/TreasuryPilotAI --public --source . --remote origin --pu
 - [HackerEarth event listing](https://www.hackerearth.com/community/challenges/hackathon/agentic-banking-hackathon/?register=true)
 - [Airwallex developer guide](https://airwallexdev.com/guide)
 
-Event details last checked October 25, 2026. The organizer landing page lists applications closing October 25 and the build period beginning October 27; the entrant reports the organizer confirmed pre-build work is eligible. The public pages reviewed did not expose a complete, separate rules document; verify eligibility, submission fields, and account-specific requirements in the registered HackerEarth workspace. The [organizer timeline and FAQ](https://airwallex.hackerearth.com/) state solo entries are allowed and require a working demo, under-five-minute video, and repository link with setup instructions.
+Event details last checked October 26, 2026. The organizer landing page lists applications closing October 25 and the build period beginning October 27; the entrant reports the organizer confirmed pre-build work is eligible. The public pages reviewed did not expose a complete, separate rules document; verify eligibility, submission fields, and account-specific requirements in the registered HackerEarth workspace. The [organizer timeline and FAQ](https://airwallex.hackerearth.com/) state solo entries are allowed and require a working demo, under-five-minute video, and repository link with setup instructions.
