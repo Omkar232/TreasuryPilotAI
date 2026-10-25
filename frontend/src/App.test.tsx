@@ -88,6 +88,36 @@ describe('TreasuryPilot shell', () => {
     expect(screen.getByText('v4')).toBeInTheDocument()
     expect(screen.queryByRole('button',{name:/approve/i})).not.toBeInTheDocument()
   })
+
+  it('filters and sorts the incident queue without changing the saved records', async () => {
+    sessionStorage.setItem('tp-token', 'operator-test-token')
+    const incident = (id:string,supplier:string,created_at:string) => ({ id,supplier,original_transfer_id:`tr-${id}`,amount:'10.00',currency:'USD',supplier_claim:'Delayed payment',state:'NEW',external_status:null,source:'unverified',simulated:false,created_at })
+    const fixtures:Record<string, unknown> = {
+      '/api/integrations/airwallex/status': { configured:false, status:'disconnected', note:'Airwallex is disconnected.' },
+      '/api/incidents': [
+        incident('old','Zen Systems','2026-10-20T10:00:00Z'),
+        incident('middle','Acme Supply','2026-10-22T10:00:00Z'),
+        incident('new','Beacon Parts','2026-10-24T10:00:00Z'),
+      ],
+      '/api/treasury/obligations':[], '/api/treasury/policies':[], '/api/audit?limit=20':[], '/api/approvals':[],
+    }
+    vi.stubGlobal('fetch', vi.fn(async (input:RequestInfo | URL) => {
+      const url=String(input)
+      const key=Object.keys(fixtures).find(path=>url.endsWith(path))
+      return new Response(JSON.stringify(key?fixtures[key]:{detail:'Not found'}),
+        {status:key?200:404,headers:{'Content-Type':'application/json'}})
+    }))
+    renderApp()
+    fireEvent.click(await screen.findByRole('link',{name:'Payment incidents'}))
+    const suppliers=()=>screen.getAllByRole('row').slice(1).map(row=>row.querySelector('.supplier-cell b')?.textContent)
+    expect(await screen.findByText('Beacon Parts')).toBeInTheDocument()
+    expect(suppliers()).toEqual(['Beacon Parts','Acme Supply','Zen Systems'])
+    fireEvent.change(screen.getByRole('combobox',{name:'Sort incidents'}),{target:{value:'supplier'}})
+    expect(suppliers()).toEqual(['Acme Supply','Beacon Parts','Zen Systems'])
+    fireEvent.change(screen.getByRole('textbox',{name:'Filter incidents'}),{target:{value:'tr-old'}})
+    expect(suppliers()).toEqual(['Zen Systems'])
+    expect(screen.getByText('1 of 3 incidents')).toBeInTheDocument()
+  })
 })
 
 afterEach(() => {

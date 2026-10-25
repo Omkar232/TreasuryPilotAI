@@ -38,7 +38,7 @@ The local Compose stack is a working demo environment; it is not a publicly reac
 
 ## Final submission checklist
 
-The official organizer page asks for a working demo, a video walkthrough under five minutes, and a repository link with setup instructions. As checked October 25, 2026, the HackerEarth listing gives the build phase as October 27–November 13, registration close as **October 25, 2026 at 18:29 UTC**, and submission deadline as **November 13, 2026 at 18:29 UTC**. Registration closes tonight in India; confirm the entrant is registered in HackerEarth. Recheck the live pages before submitting because dates and form fields may change.
+The official organizer page asks for a working demo, a video walkthrough under five minutes, and a repository link with setup instructions. As checked October 25, 2026, the HackerEarth listing gives the build phase as October 27–November 13, registration close as **October 25, 2026 at 18:29 UTC**, and submission deadline as **November 13, 2026 at 18:29 UTC**. Registration closed October 25; the entrant reports that registration is complete. Recheck the live pages before submitting because dates and form fields may change.
 
 - [x] Project title, tracks, truthful description, technology list, setup instructions, and backup demo script prepared.
 - [x] Source archive prepared without local secrets or generated state.
