@@ -1,0 +1,41 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: treasurypilot
+      POSTGRES_USER: treasurypilot
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-local-only-change-me}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U treasurypilot -d treasurypilot"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    volumes:
+      - treasury_data:/var/lib/postgresql/data
+  backend:
+    build: ./backend
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      APP_API_TOKEN: ${APP_API_TOKEN:?Set APP_API_TOKEN in .env}
+      APP_ADMIN_TOKEN: ${APP_ADMIN_TOKEN:-}
+      DATABASE_URL: postgresql+psycopg://treasurypilot:${POSTGRES_PASSWORD:-local-only-change-me}@db:5432/treasurypilot
+      FRONTEND_ORIGINS: http://localhost:5173
+      AIRWALLEX_BASE_URL: https://api.sandbox.airwallex.com
+      AIRWALLEX_CLIENT_ID: ${AIRWALLEX_CLIENT_ID:-}
+      AIRWALLEX_API_KEY: ${AIRWALLEX_API_KEY:-}
+      AIRWALLEX_LOGIN_AS: ${AIRWALLEX_LOGIN_AS:-}
+      AI_PROVIDER: ${AI_PROVIDER:-}
+      AI_API_KEY: ${AI_API_KEY:-}
+      AI_MODEL: ${AI_MODEL:-gpt-4o-mini}
+    depends_on:
+      db: { condition: service_healthy }
+    ports: ["8000:8000"]
+  frontend:
+    build:
+      context: ./frontend
+    environment:
+      BACKEND_HOSTPORT: backend:8000
+    depends_on: [backend]
+    ports: ["5173:80"]
+volumes:
+  treasury_data:
