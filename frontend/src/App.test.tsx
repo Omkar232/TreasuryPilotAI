@@ -118,6 +118,31 @@ describe('TreasuryPilot shell', () => {
     expect(suppliers()).toEqual(['Zen Systems'])
     expect(screen.getByText('1 of 3 incidents')).toBeInTheDocument()
   })
+
+  it('shows backend-only Airwallex and AI status in settings without exposing credentials', async () => {
+    sessionStorage.setItem('tp-token', 'operator-test-token')
+    const fixtures:Record<string, unknown> = {
+      '/api/integrations/airwallex/status': { configured:true,status:'configured_not_verified',note:'Credentials are configured on the backend; access is not verified.',client_id:'PRIVATE_CLIENT_SENTINEL',api_key:'PRIVATE_API_SENTINEL' },
+      '/api/integrations/ai/status': { configured:false,status:'deterministic_fallback',provider:null,note:'AI interpretation is unavailable; deterministic checks remain active.',api_key:'PRIVATE_AI_SENTINEL' },
+      '/api/incidents':[], '/api/treasury/obligations':[], '/api/treasury/policies':[],
+      '/api/audit?limit=20':[], '/api/approvals':[],
+    }
+    vi.stubGlobal('fetch', vi.fn(async (input:RequestInfo | URL) => {
+      const url=String(input)
+      const key=Object.keys(fixtures).find(path=>url.endsWith(path))
+      return new Response(JSON.stringify(key?fixtures[key]:{detail:'Not found'}),
+        {status:key?200:404,headers:{'Content-Type':'application/json'}})
+    }))
+    renderApp()
+    fireEvent.click(await screen.findByRole('link',{name:'Settings'}))
+    expect(await screen.findByRole('heading',{name:'Integration health'})).toBeInTheDocument()
+    expect(screen.getAllByText('Airwallex sandbox')).toHaveLength(2)
+    expect(await screen.findByText('Configured · not verified')).toBeInTheDocument()
+    expect(screen.getByText('AI interpretation')).toBeInTheDocument()
+    expect(await screen.findByText('Deterministic fallback')).toBeInTheDocument()
+    expect(screen.getByText(/deterministic checks remain active/)).toBeInTheDocument()
+    expect(screen.queryByText(/PRIVATE_(CLIENT|API|AI)_SENTINEL/)).not.toBeInTheDocument()
+  })
 })
 
 afterEach(() => {
